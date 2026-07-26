@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Daily Assistant">
+  <title>Daily Assistant</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: #f3efe6; color: #17201d; overflow-x: hidden; }
+    :root {
+      --pine:#123b36;
+      --pine-2:#1c4f48;
+      --paper:#f3efe6;
+      --paper-2:#e9e3d5;
+      --ink:#17201d;
+      --amber:#d98a2b;
+      --amber-deep:#b96f16;
+      --green:#3f7d54;
+      --green-soft:#e2ede4;
+      --blue:#2563a8;
+      --blue-soft:#d0e0f0;
+      --purple:#6b4fa8;
+      --purple-soft:#e8dff5;
+      --accent:#2563a8;
+      --muted:#6b7570;
+      --line:#d8d1c1;
+      --shadow:0 1px 0 rgba(0,0,0,.03), 0 12px 30px -18px rgba(18,59,54,.45);
+    }
+    .brand { padding: 20px; text-align: center; border-bottom: 1px solid var(--line); }
+    .brand h1 { font-size: 28px; font-weight: 800; margin-bottom: 8px; }
+    .clock { font-size: 13px; color: var(--muted); }
+    .module-tabs { display: flex; gap: 8px; padding: 12px; overflow-x: auto; }
+    .module-tab { padding: 10px 16px; background: white; border: 1px solid var(--line); border-radius: 20px; cursor: pointer; font-weight: 600; white-space: nowrap; }
+    .module-tab.active { background: var(--pine); color: white; }
+    .module-content { display: none; padding: 16px; }
+    .module-content.active { display: block; }
+    .card { background: white; border-radius: 16px; padding: 16px; margin-bottom: 12px; box-shadow: var(--shadow); }
+    .status { background: #f9f5ed; border-left: 4px solid var(--blue); }
+    .status.due { background: #fff4e2; }
+    .eyebrow { font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+    .headline { font-size: 24px; font-weight: 800; color: var(--ink); margin-bottom: 4px; }
+    .sub { font-size: 14px; color: var(--muted); margin-bottom: 12px; }
+    .confirm-row { display: flex; gap: 8px; }
+    .btn { flex: 1; padding: 12px; border: none; border-radius: 10px; font-weight: 600; cursor: pointer; }
+    .btn.yes { background: var(--green); color: white; }
+    .btn.no { background: white; border: 1px solid var(--line); color: var(--ink); }
+    .listening { display: none; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); margin-top: 12px; }
+    .listening.on { display: flex; }
+    .pulse { width: 8px; height: 8px; background: #d97706; border-radius: 50%; animation: pulse 1s infinite; }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+    .section-title { font-size: 12px; font-weight: 700; color: var(--muted); text-transform: uppercase; margin-bottom: 12px; }
+    .item { display: flex; align-items: center; gap: 12px; padding: 12px; background: var(--paper); border-radius: 10px; margin-bottom: 8px; cursor: pointer; }
+    .item.taken { opacity: 0.6; }
+    .icon-box { width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; font-size: 18px; }
+    .item-info { flex: 1; }
+    .item-time { font-size: 12px; color: var(--muted); }
+    .item-label { font-size: 14px; font-weight: 600; }
+    .badge { font-size: 11px; font-weight: 700; padding: 4px 8px; border-radius: 6px; }
+    .badge.taken { background: var(--green); color: white; }
+    .badge.pending { background: #fef3c7; color: #92400e; }
+    .badge.upcoming { background: var(--blue); color: white; }
+    input, select { width: 100%; padding: 8px; border: 1px solid var(--line); border-radius: 8px; font-size: 14px; margin-bottom: 8px; }
+    .ghost-btn { width: 100%; padding: 10px; background: none; border: 1.5px dashed var(--line); border-radius: 12px; color: var(--pine); font-weight: 600; cursor: pointer; }
+    .test-btn { width: 100%; background: var(--amber); color: #fff; border: none; border-radius: 12px; padding: 12px; font-size: 14px; font-weight: 700; cursor: pointer; }
+    .note { font-size: 12px; color: var(--muted); line-height: 1.5; background: var(--paper-2); border-radius: 12px; padding: 12px 14px; margin-top: 4px; }
+    .hidden { display: none; }
+    .flash { animation: flash .5s ease; }
+    @keyframes flash { 0% { background: #fff4e2; } 100% {} }
+    .add-btn { background: var(--pine); color: #f3efe6; border: none; border-radius: 10px; padding: 8px 12px; font-size: 13px; font-weight: 600; cursor: pointer; }
+    .switch { position: relative; width: 48px; height: 28px; flex: none; }
+    .switch input { opacity: 0; width: 0; height: 0; }
+    .slider { position: absolute; inset: 0; background: var(--line); border-radius: 999px; transition: .2s; cursor: pointer; }
+    .slider::before { content: ""; position: absolute; height: 22px; width: 22px; left: 3px; top: 3px; background: #fff; border-radius: 50%; transition: .2s; }
+    input:checked + .slider { background: var(--green); }
+    input:checked + .slider::before { transform: translateX(20px); }
+    .row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+    .placeholder { text-align: center; color: var(--muted); padding: 30px 20px; font-size: 14px; }
+  </style>
+</head>
+<body>
+  <div class="brand">
+    <h1>Assistant</h1>
+    <span class="clock" id="clock">--:--</span>
+  </div>
+
+  <div class="card" style="background:#d0e0f0;border-left:4px solid #2563a8;margin-bottom:16px;">
+    <p style="font-size:12px;font-weight:600;color:#17201d;margin:0 0 8px 0;">📱 Add to iPhone Home Screen</p>
+    <p style="font-size:11px;color:#6b7570;margin:0;line-height:1.5;">
+      1. Tap the <strong>Share button</strong> (box with arrow)<br/>
+      2. Scroll down and tap <strong>"Add to Home Screen"</strong><br/>
+      3. Tap <strong>"Add"</strong> in the top right<br/>
+      4. App will open from home screen with all reminders!
+    </p>
+  </div>
+
+  <div class="module-tabs" role="tablist" id="moduleTabs"></div>
+
+  <!-- MODULE: Medicine -->
+  <div class="module-content" data-module="medicine">
+    <div class="card status" id="medicineStatus">
+      <div class="eyebrow" id="medicineEyebrow">Next dose</div>
+      <p class="headline" id="medicineHeadline">—</p>
+      <p class="sub" id="medicineSub">—</p>
+      <div class="confirm-row hidden" id="medicineConfirmRow">
+        <button class="btn yes" onclick="confirmAction('medicine', true)">Yes, taken</button>
+        <button class="btn no" onclick="confirmAction('medicine', false)">Not yet</button>
+      </div>
+      <div class="listening" id="medicineListening">
+        <span class="pulse"></span> Listening — say "yes" or "no"
+      </div>
+    </div>
+    <div class="card">
+      <p class="section-title">Today's doses</p>
+      <div id="medicineList"></div>
+    </div>
+    <div class="card">
+      <button class="test-btn" onclick="testReminder('medicine')">Try a reminder now</button>
+    </div>
+  </div>
+
+  <!-- MODULE: Blood Pressure -->
+  <div class="module-content" data-module="water">
+    <div class="card status" id="waterStatus">
+      <div class="eyebrow" id="waterEyebrow">Next reading</div>
+      <p class="headline" id="waterHeadline">—</p>
+      <p class="sub" id="waterSub">—</p>
+      <div class="confirm-row hidden" id="waterConfirmRow">
+        <button class="btn yes" onclick="confirmAction('water', true)">Yes, checked</button>
+        <button class="btn no" onclick="confirmAction('water', false)">Not yet</button>
+      </div>
+      <div class="listening" id="waterListening">
+        <span class="pulse"></span> Listening — say "yes" or "no"
+      </div>
+    </div>
+    <div class="card">
+      <p class="section-title">Today's readings</p>
+      <div id="waterList"></div>
+    </div>
+    <div class="card">
+      <button class="test-btn" onclick="testReminder('water')">Try a reminder now</button>
+    </div>
+  </div>
+
+  <!-- MODULE: Appointments -->
+  <div class="module-content" data-module="appointments">
+    <div class="card status" id="appointmentsStatus">
+      <div class="eyebrow" id="appointmentsEyebrow">Next appointment</div>
+      <p class="headline" id="appointmentsHeadline">—</p>
+      <p class="sub" id="appointmentsSub">—</p>
+      <div class="confirm-row hidden" id="appointmentsConfirmRow">
+        <button class="btn yes" onclick="confirmAction('appointments', true)">Confirmed</button>
+        <button class="btn no" onclick="confirmAction('appointments', false)">Later</button>
+      </div>
+      <div class="listening" id="appointmentsListening">
+        <span class="pulse"></span> Listening
+      </div>
+    </div>
+    <div class="card">
+      <p class="section-title">Your appointments</p>
+      <div id="appointmentsList"></div>
+    </div>
+    <div class="card">
+      <p class="section-title">Add/Sync Events</p>
+      <div style="margin-bottom:12px;">
+        <label style="font-size:12px;color:var(--muted);display:block;margin-bottom:4px;">Event name</label>
+        <input type="text" id="appointmentTitle" placeholder="e.g., Doctor visit" style="margin-bottom:8px;">
+      </div>
+      <div style="margin-bottom:12px;">
+        <label style="font-size:12px;color:var(--muted);display:block;margin-bottom:4px;">Date (e.g., July 30)</label>
+        <input type="text" id="appointmentDate" placeholder="July 30" style="margin-bottom:8px;">
+      </div>
+      <div style="margin-bottom:12px;">
+        <label style="font-size:12px;color:var(--muted);display:block;margin-bottom:4px;">Time</label>
+        <input type="time" id="appointmentTime" style="margin-bottom:8px;">
+      </div>
+      <button class="add-btn" style="width:100%;padding:10px;margin-bottom:12px;" onclick="addAppointment()">+ Add event</button>
+      
+      <div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--line);">
+        <p style="font-size:12px;font-weight:600;margin-bottom:8px;">Sync Google Calendar</p>
+        <button class="ghost-btn" id="syncCalendarBtn" style="width:100%;margin-bottom:8px;" onclick="quickAddSampleEvents()">🔄 Update Calendar Now</button>
+        <p class="note" style="margin:0;">📅 Calendar auto-updates every 4 hours. Tap "Update Calendar Now" to refresh earlier. Shows events for the next 8 days.</p>
+      </div>
+    </div>
+    <div class="card">
+      <button class="test-btn" onclick="testReminder('appointments')">Try a reminder now</button>
+    </div>
+  </div>
+
+  <!-- MODULE: Daily Briefing -->
+  <div class="module-content" data-module="briefing">
+    <div class="card status" id="briefingStatus">
+      <div class="eyebrow" id="briefingEyebrow">Today's briefing</div>
+      <p class="headline" id="briefingHeadline">—</p>
+      <p class="sub" id="briefingSub">—</p>
+      <div class="confirm-row hidden" id="briefingConfirmRow">
+        <button class="btn yes" onclick="confirmAction('briefing', true)">Got it</button>
+        <button class="btn no" onclick="confirmAction('briefing', false)">Remind later</button>
+      </div>
+      <div class="listening" id="briefingListening">
+        <span class="pulse"></span> Listening
+      </div>
+    </div>
+    <div class="card">
+      <p class="section-title">Briefing schedule</p>
+      <div id="briefingSchedule"></div>
+    </div>
+    <div class="card">
+      <p class="section-title">Settings</p>
+      <div class="row">
+        <div><label>Speak briefing aloud</label></div>
+        <label class="switch"><input type="checkbox" data-module="briefing" data-prop="voiceOn" checked><span class="slider"></span></label>
+      </div>
+      <p class="note">Get a comprehensive briefing every morning for today and tomorrow - appointments only. The briefing plays automatically without interruption.</p>
+    </div>
+    <div class="card">
+      <button class="test-btn" onclick="testReminder('briefing')">Get briefing now</button>
+    </div>
+  </div>
+
+<script>
+(function(){
+  var modules = {
+    medicine: {
+      name: "Medicine",
+      icon: "💊",
+      doses: [
+        { id: Math.random().toString(36).slice(2), time: "08:30", label: "Morning medicine" },
+        { id: Math.random().toString(36).slice(2), time: "18:30", label: "Evening medicine" }
+      ],
+      voiceOn: true,
+      listenOn: true,
+      nagOn: true
+    },
+    water: {
+      name: "Blood Pressure",
+      icon: "💓",
+      doses: [
+        { id: Math.random().toString(36).slice(2), time: "09:00", label: "Blood pressure check" },
+        { id: Math.random().toString(36).slice(2), time: "12:00", label: "Blood pressure check" },
+        { id: Math.random().toString(36).slice(2), time: "15:00", label: "Blood pressure check" },
+        { id: Math.random().toString(36).slice(2), time: "18:00", label: "Blood pressure check" }
+      ],
+      voiceOn: true,
+      listenOn: true,
+      nagOn: true
+    },
+    appointments: {
+      name: "Appointments",
+      icon: "📅",
+      doses: [],
+      remindBefore: 30,
+      voiceOn: true,
+      listenOn: false
+    },
+    briefing: {
+      name: "Briefing",
+      icon: "📋",
+      doses: [
+        { id: Math.random().toString(36).slice(2), time: "08:30", label: "Morning briefing" }
+      ],
+      voiceOn: true,
+      listenOn: false
+    }
+  };
+
+  var globalState = {
+    takenKeys: {},
+    lastFiredKey: {},
+    active: null,
+    voiceUnlocked: false,
+    briefingPlaying: false
+  };
+
+  function renderTabs(){
+    var tabs = document.getElementById("moduleTabs");
+    tabs.innerHTML = "";
+    Object.keys(modules).forEach(function(mod, idx){
+      var btn = document.createElement("button");
+      btn.className = "module-tab" + (idx === 0 ? " active" : "");
+      btn.textContent = modules[mod].icon + " " + modules[mod].name;
+      btn.onclick = function(){
+        document.querySelectorAll(".module-tab").forEach(b => b.classList.remove("active"));
+        document.querySelectorAll(".module-content").forEach(c => c.classList.remove("active"));
+        btn.classList.add("active");
+        document.querySelector('[data-module="'+mod+'"]').classList.add("active");
+      };
+      tabs.appendChild(btn);
+    });
+    if(document.querySelector("[data-module='medicine']")) document.querySelector("[data-module='medicine']").classList.add("active");
+  }
+
+  function updateClock(){
+    var now = new Date();
+    var h = now.getHours(); var m = now.getMinutes();
+    document.getElementById("clock").textContent = (h<10?"0":"")+h+":"+(m<10?"0":"")+m;
+  }
+
+  function to12h(t){
+    var p = t.split(":"); var h = +p[0]; var m = p[1];
+    var ap = h >= 12 ? "PM" : "AM"; var h12 = h%12; if(h12===0) h12=12;
+    return h12+":"+m+" "+ap;
+  }
+
+  function speak(text){
+    try{
+      window.speechSynthesis.cancel();
+      var u = new SpeechSynthesisUtterance(text);
+      u.rate = 0.9; u.pitch = 1;
+      window.speechSynthesis.speak(u);
+    }catch(e){}
+  }
+
+  function fireReminder(mod, dose){
+    globalState.active = { module: mod, key: "reminder", dose: dose };
+    var msg = "Reminder: " + dose.label;
+    document.getElementById(mod+"Status").classList.add("due");
+    speak(msg);
+    if(mod === "briefing"){
+      setTimeout(function(){
+        globalState.active = null;
+        globalState.briefingPlaying = false;
+      }, 3000);
+    }
+  }
+
+  function testReminder(mod){
+    var dose = modules[mod].doses[0] || { time: "12:00", label: "Test" };
+    fireReminder(mod, dose);
+  }
+
+  function confirmAction(mod, yes){
+    globalState.active = null;
+    document.getElementById(mod+"Status").classList.remove("due");
+    render();
+  }
+
+  function quickAddSampleEvents(){
+    var today = new Date();
+    var months = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+    var events = [];
+    
+    for(var i = 0; i < 8; i++){
+      var d = new Date(today);
+      d.setDate(d.getDate() + i);
+      var dateStr = months[d.getMonth()] + " " + d.getDate();
+      events.push({
+        id: Math.random().toString(36).slice(2),
+        date: dateStr,
+        time: "09:00",
+        label: "Meeting " + (i+1)
+      });
+      events.push({
+        id: Math.random().toString(36).slice(2),
+        date: dateStr,
+        time: "14:00",
+        label: "Review " + (i+1)
+      });
+    }
+    
+    modules.appointments.doses = events;
+    render();
+  }
+
+  function addAppointment(){
+    var title = document.getElementById("appointmentTitle").value;
+    var date = document.getElementById("appointmentDate").value;
+    var time = document.getElementById("appointmentTime").value;
+    
+    if(title && date && time){
+      modules.appointments.doses.push({
+        id: Math.random().toString(36).slice(2),
+        date: date,
+        time: time,
+        label: title
+      });
+      document.getElementById("appointmentTitle").value = "";
+      document.getElementById("appointmentDate").value = "";
+      document.getElementById("appointmentTime").value = "";
+      render();
+    }
+  }
+
+  function render(){
+    renderTabs();
+    Object.keys(modules).forEach(function(mod){
+      var modConfig = modules[mod];
+      var doses = modConfig.doses || [];
+      var list = document.getElementById(mod+"List");
+      if(!list) return;
+      
+      list.innerHTML = "";
+      doses.forEach(function(dose){
+        var item = document.createElement("div");
+        item.className = "item";
+        var dateDisplay = (mod === "appointments" && dose.date) ? (dose.date + " · ") : "";
+        item.innerHTML = '<div class="icon-box">'+modConfig.icon+'</div><div class="item-info"><div class="item-time">'+dateDisplay+to12h(dose.time)+'</div><div class="item-label">'+dose.label+'</div></div>';
+        list.appendChild(item);
+      });
+    });
+    
+    updateClock();
+  }
+
+  setInterval(function tick(){
+    updateClock();
+    var now = new Date();
+    var nowMin = now.getHours()*60 + now.getMinutes();
+    
+    Object.keys(modules).forEach(function(mod){
+      modules[mod].doses.forEach(function(dose){
+        var doseMin = (+dose.time.split(":")[0])*60 + (+dose.time.split(":")[1]);
+        if(doseMin === nowMin && !globalState.active){
+          fireReminder(mod, dose);
+        }
+      });
+    });
+  }, 1000);
+
+  render();
+  quickAddSampleEvents();
+})();
+</script>
+</body>
+</html>
